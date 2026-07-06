@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- security: lock down what the page may load or talk to -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'self' blob:; connect-src 'self' https://formsubmit.co; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Sean and Brittany's Wedding — July 2027, Gig Harbor</title>
 <meta name="description" content="Sean and Brittany are getting married July 24, 2027 in Gig Harbor, Washington. Find our details and RSVP here.">
 <!-- Link-preview / share card (Open Graph + Twitter) -->
@@ -982,14 +985,40 @@ const partyCard   = document.getElementById("partyCard");
 const guestRows   = document.getElementById("guestRows");
 let activeParty   = null;
 
-/* unified shape: { party, guests:[{name,status}], note } —
-   statuses are remembered for the visit so re-searching shows answers */
+/* unified shape: { party, guests:[{name,status}], note } */
 let guestData = GUEST_LIST.map(p => ({
   party: p.party, note: "",
   guests: p.guests.map(g => ({ name: g, status: "" })),
 }));
 
+/* remember confirmed responses on this device — returning guests see
+   their saved answers pre-selected until they choose to change them */
+const STORE_KEY = "sb-rsvp-v1";
+function loadStore(){
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
+  catch(e){ return {}; }
+}
+function saveResponse(party, answers, note){
+  try {
+    const store = loadStore();
+    store[party] = { answers: Object.fromEntries(answers.map(a => [a.name, a.status])), note };
+    localStorage.setItem(STORE_KEY, JSON.stringify(store));
+  } catch(e){}
+}
+(function restoreSaved(){
+  const store = loadStore();
+  guestData.forEach(p => {
+    const saved = store[p.party];
+    if (!saved) return;
+    p.guests.forEach(g => { if (saved.answers[g.name]) g.status = saved.answers[g.name]; });
+    if (saved.note) p.note = saved.note;
+  });
+})();
+
 const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+/* escape any text that gets rendered via innerHTML (defense-in-depth for
+   guest names and party names edited into the list by hand) */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const lastNameOf = name => { const w = norm(name).trim().split(/\s+/); return w[w.length-1]; };
 
 function findParties(q){
@@ -1014,7 +1043,7 @@ searchInput.addEventListener("input", () => {
   for (const p of matches){
     const b = document.createElement("button");
     b.type = "button"; b.className = "result-btn"; b.setAttribute("role","listitem");
-    b.innerHTML = `${p.party}<small>${p.guests.length} ${p.guests.length === 1 ? "guest" : "guests"} · ${p.guests.map(g => g.name).join(" · ")}</small>`;
+    b.innerHTML = `${esc(p.party)}<small>${p.guests.length} ${p.guests.length === 1 ? "guest" : "guests"} · ${p.guests.map(g => esc(g.name)).join(" · ")}</small>`;
     b.addEventListener("click", () => showParty(p));
     resultsBox.appendChild(b);
   }
@@ -1036,8 +1065,8 @@ function showParty(p){
     const row = document.createElement("div");
     row.className = "guest-row";
     row.innerHTML =
-      `<span class="g-name">${g.name}</span>
-       <span class="g-choices" role="radiogroup" aria-label="Attendance for ${g.name}">
+      `<span class="g-name">${esc(g.name)}</span>
+       <span class="g-choices" role="radiogroup" aria-label="Attendance for ${esc(g.name)}">
          <label><input type="radio" name="g${i}" value="Joyfully accepts"${g.status === "Joyfully accepts" ? " checked" : ""}>Accepts</label>
          <label><input type="radio" name="g${i}" value="Regretfully declines"${g.status === "Regretfully declines" ? " checked" : ""}>Declines</label>
        </span>`;
@@ -1079,17 +1108,18 @@ partyCard.addEventListener("submit", e => {
   })
   .then(r => r.ok ? r.json() : Promise.reject())
   .then(() => {
-    /* remember for this visit so re-searching shows the answers */
     answers.forEach(a => {
       const g = activeParty.guests.find(x => x.name === a.name);
       if (g) g.status = a.status;
     });
     activeParty.note = note;
+    saveResponse(activeParty.party, answers, note); /* persists across visits */
     btn.disabled = false; btn.textContent = "Confirm our RSVP";
     showSuccess();
   })
   .catch(() => {
     /* service unreachable — open the guest's mail app as a fallback */
+    saveResponse(activeParty.party, answers, note);
     btn.disabled = false; btn.textContent = "Confirm our RSVP";
     const body = [
       `Party: ${activeParty.party}`,
