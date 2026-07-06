@@ -705,8 +705,8 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
       <div class="field" id="fSearch">
         <label for="rsvpSearch">Find your invitation</label>
         <input type="search" id="rsvpSearch" autocomplete="off" spellcheck="false"
-               placeholder="Search your name&hellip;" aria-describedby="searchHint">
-        <p class="hint" id="searchHint">Any name in your party will find your invitation.</p>
+               placeholder="Search your last name&hellip;" aria-describedby="searchHint">
+        <p class="hint" id="searchHint">Enter the last name on your invitation. If more than one party shares it, choose yours from the list.</p>
       </div>
 
       <div id="rsvpResults" class="rsvp-results" role="list" aria-live="polite"></div>
@@ -797,11 +797,11 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
 
 <script>
 /* ================= CONFIG — the three lines to edit ================= */
-const RSVP_EMAIL   = "sean@example.com";          /* ← replace with Sean's email — confirmed
-                                                     RSVPs are emailed here automatically
-                                                     via FormSubmit (formsubmit.co). The first
-                                                     RSVP triggers a one-time activation email
-                                                     from FormSubmit — click the link in it.  */
+const RSVP_EMAIL   = "foreverintheharbor@icloud.com"; /* confirmed RSVPs are emailed here
+                                                     automatically via FormSubmit
+                                                     (formsubmit.co). The first RSVP triggers
+                                                     a one-time activation email from
+                                                     FormSubmit — click the link in it.      */
 const FUND_URL     = "";                          /* ← paste honeymoon fund link when ready */
 const WEDDING_DATE = "2027-07-24T00:00:00-07:00"; /* countdown target (PDT) */
 
@@ -990,11 +990,15 @@ let guestData = GUEST_LIST.map(p => ({
 }));
 
 const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+const lastNameOf = name => { const w = norm(name).trim().split(/\s+/); return w[w.length-1]; };
 
 function findParties(q){
   q = norm(q.trim());
   if (q.length < 2) return [];
-  return guestData.filter(p => p.guests.some(g => norm(g.name).includes(q)));
+  /* primary: last-name match; fallback: any part of the full name */
+  return guestData.filter(p => p.guests.some(g =>
+    lastNameOf(g.name).startsWith(q) || norm(g.name).includes(q)
+  ));
 }
 
 searchInput.addEventListener("input", () => {
