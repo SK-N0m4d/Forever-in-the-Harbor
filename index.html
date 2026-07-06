@@ -205,6 +205,24 @@ section{position:relative}
 /* story */
 .story{background:linear-gradient(var(--oxblood),var(--oxblood-deep))}
 .story-blurb{margin:var(--space-4) auto 0;max-width:58ch}
+.story-prose{max-width:64ch;margin:var(--space-6) auto 0;text-align:left;font-size:19px;line-height:1.75}
+.story-prose h3{
+  font-size:29px;letter-spacing:.03em;text-align:center;color:var(--ivory);
+  margin:var(--space-6) 0 var(--space-3);
+}
+.story-prose h3::after{
+  content:"";display:block;width:44px;height:1px;background:var(--gold);margin:14px auto 0;
+}
+.story-prose p{margin-bottom:var(--space-3);color:var(--ivory-dim)}
+.story-prose p:last-child{margin-bottom:0}
+.story-prose .dialogue{
+  font-family:var(--display);font-style:italic;font-size:22px;color:var(--ivory);
+  text-align:center;margin:var(--space-4) auto;
+}
+.story-ending{
+  font-family:var(--script);font-size:clamp(34px,5vw,46px);color:var(--gold);
+  text-align:center;margin-top:var(--space-5);
+}
 
 /* gallery — expanding panels (pattern: 21st.dev expanding gallery) */
 .gallery{display:flex;gap:10px;height:min(62vh,520px);margin-top:var(--space-6)}
@@ -216,9 +234,10 @@ section{position:relative}
 .panel:hover img,.panel.wide img{opacity:1;transform:scale(1.045)}
 .panel.wide{flex:4.2}
 .panel figcaption{
-  position:absolute;left:0;right:0;bottom:0;padding:18px 20px 16px;
-  background:linear-gradient(transparent,rgba(27,20,24,.85));
-  font-family:var(--display);font-style:italic;font-size:16.5px;letter-spacing:.05em;
+  position:absolute;left:0;right:0;bottom:0;padding:44px 20px 16px;
+  background:linear-gradient(transparent,rgba(27,20,24,.55) 35%,rgba(27,20,24,.96));
+  font-family:var(--display);font-style:italic;font-size:17px;letter-spacing:.05em;
+  color:var(--ivory);text-shadow:0 1px 3px rgba(15,9,12,.9),0 0 10px rgba(15,9,12,.8);
   opacity:0;transform:translateY(8px);transition:opacity .5s .15s,transform .5s .15s;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
@@ -240,6 +259,48 @@ section{position:relative}
 .card p{color:var(--ivory-dim);font-size:16px}
 .card .glyph{line-height:1}
 .card .glyph svg{height:26px;width:auto;margin:0 auto;display:block}
+.card-btn{cursor:pointer;font:inherit;color:inherit;width:100%;transition:border-color .3s,transform .3s var(--ease)}
+.card-btn:hover{border-color:var(--gold);transform:translateY(-3px)}
+.card-hint{
+  display:block;margin-top:var(--space-3);font-size:12px;letter-spacing:.28em;
+  text-transform:uppercase;color:var(--gold);
+}
+.card-hint::after{content:" \2192"}
+/* dress code modal */
+.dc-overlay{
+  position:fixed;inset:0;z-index:200;background:rgba(20,12,16,.72);
+  display:flex;align-items:center;justify-content:center;padding:clamp(14px,3vw,40px);
+  opacity:0;transition:opacity .35s var(--ease);
+}
+.dc-overlay[hidden]{display:none}
+.dc-overlay.open{opacity:1}
+.dc-dialog{
+  position:relative;background:var(--oxblood-deep);
+  border:1px solid var(--gold-dim);outline:1px solid rgba(199,166,103,.18);outline-offset:7px;
+  padding:clamp(20px,4vw,44px);max-width:880px;width:100%;max-height:92vh;max-height:92dvh;overflow:auto;
+  transform:translateY(14px);transition:transform .35s var(--ease);
+}
+.dc-overlay.open .dc-dialog{transform:none}
+.dc-close{
+  position:absolute;top:10px;right:12px;background:none;border:none;cursor:pointer;
+  color:var(--gold);font-size:32px;line-height:1;padding:8px 12px;font-family:var(--body);
+}
+.dc-close:hover{color:var(--ivory)}
+.dc-split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,3vw,32px)}
+.dc-side{margin:0;text-align:center}
+.dc-side img{width:100%;height:auto;border:1px solid rgba(199,166,103,.3)}
+.dc-label{
+  font-family:var(--script);font-size:clamp(28px,4vw,40px);color:var(--gold);
+  margin-bottom:12px;line-height:1.1;
+}
+.dc-note{
+  margin-top:var(--space-3);text-align:center;font-family:var(--display);font-style:italic;
+  font-size:17px;color:var(--ivory-dim);
+}
+@media (max-width:640px){
+  .dc-split{grid-template-columns:1fr 1fr;gap:10px}
+  .dc-label{font-size:24px}
+}
 .adults-note{
   margin:var(--space-6) auto 0;max-width:56ch;text-align:center;
   font-family:var(--display);font-style:italic;font-size:19px;color:var(--ivory-dim);
@@ -512,21 +573,42 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
     <p class="eyebrow reveal">Our Story</p>
     <h2 class="section-title reveal d1">How we got here</h2>
     <hr class="rule reveal d1">
-    <p class="coming-soon reveal d2">Our story, in our own words — arriving soon.</p>
-    <!-- [PLACEHOLDER: 1–2 paragraph blurb from Sean & Brittany] -->
+    <div class="story-prose">
+      <h3 class="reveal">A Slow Start</h3>
+      <p class="reveal d1">Like most love stories of our generation, ours began on a dating app, though the spark took its time to catch. Sean was living out of a suitcase, chasing work across time zones. Brittany was building a life she was proud of and waiting for someone worth pausing it for. For months, the only sign of interest was an occasional like on an Instagram post, quiet and easy to miss.</p>
+      <p class="reveal d1">Then, in July of 2023, Sean sent a message. Brittany read it surrounded by her closest friends, mid celebration on a bachelorette weekend in Austin. He asked her to dinner. She hesitated, until her friends insisted she couldn&rsquo;t say no.</p>
+
+      <h3 class="reveal">The First Date, and the Goodbye</h3>
+      <p class="reveal d1">They met at Soho House in Austin, and the connection was immediate. But as the evening wound down, reality set in. Sean was flying to Los Angeles the next morning for two weeks of work, and Brittany was leaving for St. Tropez, Amsterdam, and Positano with her friends. Neither knew when they&rsquo;d see each other again.</p>
+      <p class="reveal d1">Sean couldn&rsquo;t shake the feeling that something had shifted. By the time he got home, he&rsquo;d made up his mind to ask Brittany to come to Los Angeles. He braced for a no. Instead, she said yes.</p>
+      <p class="reveal d1">They spent the weekend walking Santa Monica and its pier, watching the spark from Austin grow into something neither could deny. Then it was over just as quickly, Sean back to work, Brittany back to Austin to pack for her own trip.</p>
+
+      <h3 class="reveal">&ldquo;Looking at Flights&rdquo;</h3>
+      <p class="reveal d1">Weeks later, with Sean back home and Brittany in the south of France, she called to catch him up on her travels and, half in jest, invited him to Amsterdam. Mid conversation, she noticed he&rsquo;d gone quiet.</p>
+      <p class="dialogue reveal d1">&ldquo;What are you doing?&rdquo; she asked.<br>&ldquo;Looking at flights,&rdquo; he said.</p>
+      <p class="reveal d1">He booked one the next day. It was in Amsterdam that everything became clear: this wasn&rsquo;t a fling, and the two of them were meant for each other.</p>
+
+      <h3 class="reveal">Falling in Love, One City at a Time</h3>
+      <p class="reveal d1">From there, they fell for each other the same way they&rsquo;d found each other in the first place: on the move. Amsterdam, Positano, Rome, London, Mallorca, Stockholm, Krak&oacute;w, Alba, Florence, Bologna, the Cayman Islands, Tulum, and more. Every trip brought them closer, until Sean knew there was no one else he wanted beside him, Brittany, and the boys, Jax and Baxter.</p>
+
+      <h3 class="reveal">The Proposal (With a Few Detours)</h3>
+      <p class="reveal d1">Sean spent months quietly planning the perfect proposal, one that would take Brittany from Austin to London to meet his parents, then on to Amsterdam. Naturally, nothing went quite to plan. Storms in Texas, an airport sprint, and hours on the tarmac left them stranded in London overnight, their flight to Amsterdam pushed to the next morning.</p>
+      <p class="reveal d1">Determined not to let the delay dampen the trip, Sean booked a night at the Rosewood and called in his best friend, Lorenzo, who gave them the VIP treatment at Scarfes Bar. By the end of the night, the detour felt like a gift rather than a setback, though Sean couldn&rsquo;t stop thinking about what the next day would bring: December 1st, 2025. Engagement day.</p>
+      <p class="reveal d1">Jet lagged and wide awake at 2 a.m., they ordered an English breakfast to the room and watched <em>Love Actually</em> until it was time to leave for Amsterdam. Once they&rsquo;d checked into the Waldorf Astoria, Brittany went down for a much needed nap. Sean told her he was heading out to take photos of the city. In truth, he had four hours to bring months of planning to life.</p>
+      <p class="reveal d1">By the time Brittany woke, everything was ready. She, Sean, and Sean&rsquo;s parents, Dave and Kelli, set out on a private canal tour through Amsterdam, sharing wine and charcuterie as the city drifted by. Back at the hotel, nerves high, Sean led Brittany to the private garden and asked her to spend the rest of her life with him, in the very city where they&rsquo;d first known they were meant to be.</p>
+      <p class="story-ending reveal d1">She said yes.</p>
+    </div>
 
     <div class="gallery reveal d2" id="gallery" aria-label="Photo gallery">
-      <figure class="panel wide"><img src="assets/still_0.2.jpg" alt="The garden ceremony aisle at dusk, lined with burgundy and ivory florals" loading="lazy"><figcaption>The garden, at dusk</figcaption></figure>
-      <figure class="panel"><img src="assets/still_2.5.jpg" alt="Florals atop white pillars under string lights" loading="lazy"><figcaption>Three pillars on the hill</figcaption></figure>
-      <figure class="panel"><img src="assets/still_5.jpg" alt="A champagne cart beside a candlelit table" loading="lazy"><figcaption>Champagne on arrival</figcaption></figure>
-      <figure class="panel"><img src="assets/still_7.5.jpg" alt="Candlelit tablescape with burgundy florals" loading="lazy"><figcaption>By candlelight</figcaption></figure>
-      <figure class="panel"><img src="assets/still_10.jpg" alt="Deep burgundy calla lilies among candles" loading="lazy"><figcaption>Oxblood in bloom</figcaption></figure>
-      <figure class="panel"><img src="assets/still_14.5.jpg" alt="A single candle glowing beside a burgundy bloom" loading="lazy"><figcaption>The last glint of silver</figcaption></figure>
+      <figure class="panel wide"><img src="assets/couple_1.jpg" alt="Sean and Brittany kissing on the bow of a boat beneath a stone arch bridge and cliffs" loading="lazy"><figcaption>A spark ignites in Positano</figcaption></figure>
+      <figure class="panel"><img src="assets/couple_2.jpg" alt="Sean in a black tuxedo and Brittany in a black gown, smiling at each other beneath the trees" loading="lazy"><figcaption>Wedding dance partners for life</figcaption></figure>
+      <figure class="panel"><img src="assets/couple_3.jpg" alt="Sean and Brittany on the deck of a sailboat with flowers and a spread of food, coastline behind them" loading="lazy"><figcaption>Sailing in Mallorca</figcaption></figure>
+      <figure class="panel"><img src="assets/couple_4.jpg" alt="Brittany in a Texas jersey and cowboy hat flashing the Hook 'em sign beside Sean at a packed football stadium" loading="lazy"><figcaption>She converts him to Hook &rsquo;em</figcaption></figure>
+      <figure class="panel"><img src="assets/couple_5.jpg" alt="Sean and Brittany in Seahawks gear on the field at Lumen Field before a game" loading="lazy"><figcaption>And he added another 12</figcaption></figure>
+      <figure class="panel"><img src="assets/couple_6.jpg" alt="Sean and Brittany smiling along the Arno river with the Ponte Vecchio behind them in Florence" loading="lazy"><figcaption>From spritzing in Florence</figcaption></figure>
+      <figure class="panel"><img src="assets/couple_7.jpg" alt="Sean kneeling to propose to Brittany in a candlelit garden pavilion with a Christmas tree glowing behind them" loading="lazy"><figcaption>To one knee in Amsterdam</figcaption></figure>
+      <figure class="panel"><img src="assets/couple_8.jpg" alt="Sean and Brittany kissing beside a Christmas tree dressed in burgundy and gold, her new ring catching the light" loading="lazy"><figcaption>&ldquo;Yes&rdquo; turned into the gift of the year</figcaption></figure>
     </div>
-    <p class="gallery-note coming-soon reveal d3">Photographs of the two of us — and our travels — will join the gallery soon.</p>
-
-    <p class="reveal d3" style="margin-top:var(--space-6)">Speaking of celebrating us — if you'd like to give a gift, take a look at our registry.</p>
-    <p class="reveal d3" style="margin-top:var(--space-4)"><a class="btn" href="#registry">See the Registry</a></p>
   </div>
 </section>
 
@@ -539,11 +621,12 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
     <p class="lede reveal d2" style="margin:0 auto">Everything you'll want to know for Sean and Brittany's wedding day in Gig Harbor on July 24, 2027.</p>
 
     <div class="detail-grid">
-      <div class="card reveal">
+      <button type="button" class="card card-btn reveal" id="dressCodeCard" aria-haspopup="dialog" aria-controls="dcModal">
         <div class="glyph" aria-hidden="true"><svg viewBox="0 0 60 34"><g fill="none" stroke="#C7A667" stroke-width="1.3"><path d="M30 4l11 13-11 13-11-13z"/><path d="M2 17h16M42 17h16"/></g><circle cx="30" cy="17" r="2" fill="#C7A667"/></svg></div>
         <h3>Dress Code</h3>
         <p><strong>Formal attire.</strong> Black suits for the gentlemen; formal, dark-palette gowns for the ladies. Think of it as an excuse to look your absolute best.</p>
-      </div>
+        <span class="card-hint">View the inspiration</span>
+      </button>
       <div class="card reveal d1">
         <div class="glyph" aria-hidden="true"><svg viewBox="0 0 60 34"><g fill="none" stroke="#C7A667" stroke-width="1.3"><path d="M30 4l11 13-11 13-11-13z"/><path d="M2 17h16M42 17h16"/></g><circle cx="30" cy="17" r="2" fill="#C7A667"/></svg></div>
         <h3>Schedule</h3>
@@ -558,7 +641,7 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
     </div>
 
     <div class="evening-strip reveal d2" aria-label="Glimpses of the evening">
-      <span>Champagne on arrival</span><span>A ceremony on the hill</span><span>Saxophone at dusk</span><span>Martinis &amp; negronis</span><span>Candlelight &amp; a disco ball</span>
+      <span>Champagne on arrival</span><span>A ceremony in the garden</span><span>Saxophone at dusk</span><span>Martinis &amp; negronis</span><span>Candlelight &amp; a disco ball</span>
     </div>
 
     <p class="adults-note reveal d3">Please note — this is an adults-only celebration. We hope it gives you a chance to relax and enjoy the night with us.</p>
@@ -625,7 +708,7 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
         </div>
         <p class="error" id="partyError" role="alert">Kindly confirm attendance for each guest.</p>
         <button class="btn btn-solid rsvp-submit" type="submit">Confirm our RSVP</button>
-        <p class="rsvp-mailnote">Confirming opens your mail app with your response addressed to us &mdash; just press send.</p>
+        <p class="rsvp-mailnote">Confirming sends your response directly to us.</p>
       </form>
 
       <div id="rsvpSuccess" class="rsvp-success" hidden>
@@ -671,6 +754,24 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
   </div>
 </section>
 
+<!-- ============ DRESS CODE MODAL ============ -->
+<div class="dc-overlay" id="dcModal" role="dialog" aria-modal="true" aria-label="Dress code inspiration" hidden>
+  <div class="dc-dialog">
+    <button type="button" class="dc-close" id="dcClose" aria-label="Close">&times;</button>
+    <div class="dc-split">
+      <figure class="dc-side">
+        <figcaption class="dc-label">His</figcaption>
+        <img src="assets/dresscode_his.jpg" alt="Illustration of a black suit with a white shirt, black tie, and polished black shoes">
+      </figure>
+      <figure class="dc-side">
+        <figcaption class="dc-label">Hers</figcaption>
+        <img src="assets/dresscode_hers.jpg" alt="Illustration of a formal deep navy gown with draped silhouette and embellished neckline">
+      </figure>
+    </div>
+    <p class="dc-note">Formal attire &mdash; a glamorous summer evening, dressed to impress.</p>
+  </div>
+</div>
+
 <!-- ============ FOOTER ============ -->
 <footer>
   <div class="foot-mono" aria-hidden="true">
@@ -683,20 +784,19 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
 
 <script>
 /* ================= CONFIG — the three lines to edit ================= */
-const RSVP_EMAIL   = "sean@example.com";          /* ← replace with Sean's email */
+const RSVP_EMAIL   = "sean@example.com";          /* ← replace with Sean's email — confirmed
+                                                     RSVPs are emailed here automatically
+                                                     via FormSubmit (formsubmit.co). The first
+                                                     RSVP triggers a one-time activation email
+                                                     from FormSubmit — click the link in it.  */
 const FUND_URL     = "";                          /* ← paste honeymoon fund link when ready */
 const WEDDING_DATE = "2027-07-24T00:00:00-07:00"; /* countdown target (PDT) */
 
-/* GOOGLE SHEET RSVP BACKEND — paste the Apps Script web-app URL here
-   (full setup guide: google-sheet/Code.gs). When set, the guest list
-   loads live from the sheet and confirmations write invite status back
-   to it automatically. While empty, the sample list below is used and
-   responses fall back to email.                                        */
-const SHEET_API_URL = "";
-
-/* FALLBACK GUEST LIST — used only while SHEET_API_URL is empty. */
+/* THE GUEST LIST — replace these sample parties with the real invitations.
+   One entry per invitation/household; guests search any name in their
+   party to find and confirm their RSVP.                                  */
 const GUEST_LIST = [
-  { party: "The Hale Family",            guests: ["Alexander Hale", "Margaret Hale"] },
+  { party: "The Komendat's",            guests: ["Dave Komendat", "Kelli Komendat"] },
   { party: "Eleanor Whitfield & Guest",  guests: ["Eleanor Whitfield", "Guest of Eleanor"] },
   { party: "The Ashford Party",          guests: ["James Ashford", "Clara Ashford", "Rose Ashford"] },
   { party: "Thomas Beaumont",            guests: ["Thomas Beaumont"] },
@@ -831,6 +931,26 @@ panels.forEach(p => {
   });
 });
 
+/* ---------- dress code modal ---------- */
+const dcModal = document.getElementById("dcModal");
+const dcCard  = document.getElementById("dressCodeCard");
+const dcClose = document.getElementById("dcClose");
+function openDC(){
+  dcModal.hidden = false;
+  requestAnimationFrame(() => dcModal.classList.add("open"));
+  document.body.style.overflow = "hidden";
+  dcClose.focus();
+}
+function closeDC(){
+  dcModal.classList.remove("open");
+  document.body.style.overflow = "";
+  setTimeout(() => { dcModal.hidden = true; dcCard.focus(); }, 350);
+}
+dcCard.addEventListener("click", openDC);
+dcClose.addEventListener("click", closeDC);
+dcModal.addEventListener("click", e => { if (e.target === dcModal) closeDC(); });
+addEventListener("keydown", e => { if (e.key === "Escape" && !dcModal.hidden) closeDC(); });
+
 /* ---------- registry ---------- */
 const contribute = document.getElementById("contributeBtn");
 if (FUND_URL){
@@ -849,17 +969,12 @@ const partyCard   = document.getElementById("partyCard");
 const guestRows   = document.getElementById("guestRows");
 let activeParty   = null;
 
-/* unified shape: { party, guests:[{name,status}], note } */
+/* unified shape: { party, guests:[{name,status}], note } —
+   statuses are remembered for the visit so re-searching shows answers */
 let guestData = GUEST_LIST.map(p => ({
   party: p.party, note: "",
   guests: p.guests.map(g => ({ name: g, status: "" })),
 }));
-if (SHEET_API_URL){
-  fetch(SHEET_API_URL)
-    .then(r => r.json())
-    .then(d => { if (Array.isArray(d.parties) && d.parties.length) guestData = d.parties; })
-    .catch(() => {}); /* sheet unreachable → fallback list stands */
-}
 
 const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
 
@@ -932,36 +1047,40 @@ partyCard.addEventListener("submit", e => {
     return;
   }
   const note = document.getElementById("rsvpNote").value.trim();
+  const btn = partyCard.querySelector(".rsvp-submit");
+  btn.disabled = true; btn.textContent = "Confirming…";
 
-  if (SHEET_API_URL){
-    /* write invite status back to the Google Sheet */
-    const btn = partyCard.querySelector(".rsvp-submit");
-    btn.disabled = true; btn.textContent = "Confirming…";
-    fetch(SHEET_API_URL, {
-      method: "POST", mode: "no-cors",
-      headers: { "Content-Type": "text/plain" }, /* avoids CORS preflight */
-      body: JSON.stringify({ party: activeParty.party, answers, note }),
-    }).then(() => {
-      /* update local copy so re-searching shows the new status */
-      answers.forEach(a => {
-        const g = activeParty.guests.find(x => x.name === a.name);
-        if (g) g.status = a.status;
-      });
-      activeParty.note = note;
-      showSuccess();
-    }).catch(() => {
-      btn.disabled = false; btn.textContent = "Confirm our RSVP";
-      alert("We couldn't reach the guest list just now — please try again in a moment.");
+  /* email the RSVP directly to the couple's inbox via FormSubmit */
+  const payload = { _subject: `RSVP — ${activeParty.party}`, _template: "table", _captcha: "false", Party: activeParty.party };
+  answers.forEach((a,i) => { payload[`Guest ${i+1}`] = `${a.name} — ${a.status}`; });
+  if (note) payload.Note = note;
+
+  fetch(`https://formsubmit.co/ajax/${RSVP_EMAIL}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  .then(r => r.ok ? r.json() : Promise.reject())
+  .then(() => {
+    /* remember for this visit so re-searching shows the answers */
+    answers.forEach(a => {
+      const g = activeParty.guests.find(x => x.name === a.name);
+      if (g) g.status = a.status;
     });
-  } else {
-    /* no sheet configured yet — fall back to email */
+    activeParty.note = note;
+    btn.disabled = false; btn.textContent = "Confirm our RSVP";
+    showSuccess();
+  })
+  .catch(() => {
+    /* service unreachable — open the guest's mail app as a fallback */
+    btn.disabled = false; btn.textContent = "Confirm our RSVP";
     const body = [
       `Party: ${activeParty.party}`,
       ...answers.map(a => `${a.name} — ${a.status}`),
       note ? `Note: ${note}` : null,
     ].filter(Boolean).join("\n");
     location.href = `mailto:${RSVP_EMAIL}?subject=${encodeURIComponent("RSVP — " + activeParty.party)}&body=${encodeURIComponent(body)}`;
-  }
+  });
 });
 
 function showSuccess(){
