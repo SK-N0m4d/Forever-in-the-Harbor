@@ -30,5 +30,7 @@ then visit http://localhost:8000. Any static host (Netlify, Vercel, GitHub Pages
 ## Notes
 
 - `assets/hero.mp4` is re-encoded with dense keyframes (every 8 frames) + faststart specifically for smooth scroll-scrubbing; if you ever swap the film, re-encode the same way: `ffmpeg -i in.mp4 -c:v libx264 -crf 20 -g 4 -an -movflags +faststart hero.mp4`. The poster frame is `assets/poster.jpg`.
-- Password gate intentionally omitted for this version (can be added later).
+- `hero-720.mp4` is the same film at 720p for phones (about a third of the download); the page picks between the two automatically. Re-encode it alongside `hero.mp4` if the film changes: `ffmpeg -i hero.mp4 -vf scale=-2:720 -c:v libx264 -crf 25 -g 4 -an -movflags +faststart hero-720.mp4`.
+- Gallery: expanding panels on desktop, a swipe carousel on phones and tablets. Photos are 1200px wide, progressive JPEG — keep new ones around that size.
+- Navigation: the current section is highlighted as you scroll; on phones the bar tucks away while scrolling down and returns on the way up.
 - Respects `prefers-reduced-motion`: shows a static hero instead of the scrubbed film.

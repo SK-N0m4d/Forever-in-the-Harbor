@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- security: lock down what the page may load or talk to -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'self' blob:; connect-src 'self' https://formsubmit.co; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="theme-color" content="#1B1418">
+<meta name="color-scheme" content="dark">
 <title>Sean and Brittany's Wedding — July 2027, Gig Harbor</title>
 <meta name="description" content="Sean and Brittany are getting married July 24, 2027 in Gig Harbor, Washington. Find our details and RSVP here.">
 <!-- Link-preview / share card (Open Graph + Twitter) -->
@@ -21,6 +23,9 @@
 <meta name="twitter:title" content="Sean &amp; Brittany — July 24, 2027">
 <meta name="twitter:description" content="One evening in Gig Harbor, Washington, dressed to the nines. Find our story, the details, and RSVP.">
 <meta name="twitter:image" content="https://forever-in-the-harbor.sk-n0m4d.workers.dev/og.jpg">
+<!-- returning guests: skip the gate before first paint (no flash) -->
+<script>try{if(localStorage.getItem("sb-gate-v1")==="fd2549981316c634e0a3e93848710cf3fa27f71a276905bdaed019f3b7d7efa8")document.documentElement.classList.add("ungated")}catch(e){}</script>
+<link rel="preload" as="image" href="poster.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Pinyon+Script&display=swap" rel="stylesheet">
@@ -46,9 +51,12 @@
   --space-1:8px; --space-2:16px; --space-3:24px; --space-4:32px;
   --space-5:48px; --space-6:64px; --space-7:96px; --space-8:140px;
   --ease:cubic-bezier(.25,.46,.45,.94);
+  --gutter:clamp(22px,5vw,60px);
+  --nav-h:76px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%;scrollbar-gutter:stable}
+html.locked,html.locked body{overflow:hidden}
 body{
   background:var(--oxblood);
   color:var(--ivory);
@@ -56,8 +64,17 @@ body{
   font-size:17px;
   line-height:1.65;
   -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
   overflow-x:hidden;
+  -webkit-tap-highlight-color:transparent;
 }
+a,button,label,summary{touch-action:manipulation}
+.skip{
+  position:fixed;top:10px;left:10px;z-index:1100;background:var(--gold);color:var(--ink);
+  padding:12px 18px;font-size:13px;letter-spacing:.2em;text-transform:uppercase;
+  transform:translateY(-200%);transition:transform .25s var(--ease);
+}
+.skip:focus{transform:none}
 ::selection{background:var(--gold);color:var(--ink)}
 img,video{display:block;max-width:100%}
 a{color:var(--gold);text-decoration:none}
@@ -87,12 +104,12 @@ h1,h2,h3{font-family:var(--display);font-weight:500;line-height:1.12}
 /* ---------- password gate ---------- */
 .gate{
   position:fixed;inset:0;z-index:1000;background:var(--ink);
-  display:flex;align-items:center;justify-content:center;padding:24px;
+  display:flex;padding:24px;overflow-y:auto;overscroll-behavior:contain;
   transition:opacity .8s var(--ease);
 }
 .gate.unlocked{opacity:0;pointer-events:none}
-.gate[hidden]{display:none}
-.gate-inner{text-align:center;max-width:380px;width:100%}
+.gate[hidden],.ungated .gate{display:none}
+.gate-inner{text-align:center;max-width:380px;width:100%;margin:auto}
 .gate-mono svg{height:clamp(130px,22vh,180px);width:auto;margin:0 auto var(--space-4)}
 .gate-names{font-family:var(--display);font-size:clamp(30px,6vw,40px);letter-spacing:.06em}
 .gate-names .amp-g{font-family:var(--script);font-size:.75em;color:var(--gold)}
@@ -117,46 +134,92 @@ body.gated{overflow:hidden}
 .nav{
   position:fixed;inset:0 0 auto 0;z-index:100;
   display:flex;align-items:center;justify-content:space-between;
-  padding:18px clamp(20px,4vw,48px);
-  transition:background .45s var(--ease),box-shadow .45s var(--ease);
+  padding:calc(14px + env(safe-area-inset-top)) max(clamp(20px,4vw,48px),env(safe-area-inset-right)) 14px max(clamp(20px,4vw,48px),env(safe-area-inset-left));
+  transition:background .45s var(--ease),box-shadow .45s var(--ease),transform .45s var(--ease);
 }
-.nav.scrolled{background:rgba(27,20,24,.92);backdrop-filter:blur(10px);box-shadow:0 1px 0 rgba(199,166,103,.22)}
-.nav-mark{display:flex;align-items:center;gap:12px;color:var(--ivory)}
+.nav::before{ /* blur lives on a pseudo-element so the bar itself never re-rasterises */
+  content:"";position:absolute;inset:0;z-index:-1;opacity:0;
+  background:rgba(27,20,24,.9);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  box-shadow:0 1px 0 rgba(199,166,103,.22);transition:opacity .45s var(--ease);
+}
+.nav.scrolled::before{opacity:1}
+.nav.menu-open::before{opacity:0}
+.nav-mark{display:flex;align-items:center;gap:12px;color:var(--ivory);min-height:48px}
 .nav-mark svg{height:40px;width:auto;flex:none}
 .nav-mark span{font-family:var(--display);font-size:19px;letter-spacing:.14em}
-.nav-links{display:flex;align-items:center;gap:clamp(16px,2.4vw,34px);list-style:none}
+.nav-links{display:flex;align-items:center;gap:clamp(14px,2.2vw,32px);list-style:none}
 .nav-links a{
+  position:relative;display:block;
   font-family:var(--body);font-size:13.5px;letter-spacing:.22em;text-transform:uppercase;
-  color:var(--ivory-dim);padding:10px 2px;transition:color .25s;
+  color:var(--ivory-dim);padding:12px 2px;transition:color .25s;
 }
-.nav-links a:hover{color:var(--gold)}
+.nav-links a:not(.nav-rsvp)::after{
+  content:"";position:absolute;left:2px;right:calc(2px + .22em);bottom:6px;height:1px;background:var(--gold);
+  transform:scaleX(0);transform-origin:left;transition:transform .4s var(--ease);
+}
+.nav-links a[aria-current]{color:var(--ivory)}
+.nav-links a[aria-current]::after{transform:scaleX(1)}
 .nav-rsvp{
   border:1px solid var(--gold);color:var(--gold)!important;padding:10px 22px!important;
   transition:background .3s,color .3s;
 }
-.nav-rsvp:hover{background:var(--gold);color:var(--ink)!important}
-.nav-toggle{
-  display:none;background:none;border:none;cursor:pointer;padding:12px;
+.nav-rsvp[aria-current]{background:rgba(199,166,103,.16)}
+@media (hover:hover){
+  .nav-links a:hover{color:var(--gold)}
+  .nav-links a:not(.nav-rsvp):hover::after{transform:scaleX(1)}
+  .nav-rsvp:hover{background:var(--gold);color:var(--ink)!important}
 }
-.nav-toggle span{display:block;width:26px;height:1.5px;background:var(--ivory);margin:6px 0;transition:.3s}
+.nav-toggle{
+  display:none;position:relative;width:48px;height:48px;margin-right:-10px;
+  background:none;border:none;cursor:pointer;
+}
+.nav-toggle span{
+  position:absolute;left:11px;width:26px;height:1.5px;background:var(--ivory);
+  transition:transform .4s var(--ease),top .4s var(--ease);
+}
+.nav-toggle span:nth-child(1){top:19px}
+.nav-toggle span:nth-child(2){top:28px}
+.nav-toggle[aria-expanded=true] span:nth-child(1){top:23.5px;transform:rotate(45deg)}
+.nav-toggle[aria-expanded=true] span:nth-child(2){top:23.5px;transform:rotate(-45deg)}
 .mobile-menu{
   position:fixed;inset:0;z-index:99;background:var(--ink);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;
-  opacity:0;pointer-events:none;transition:opacity .4s var(--ease);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(6px,2.2vh,18px);
+  padding:calc(var(--nav-h) + env(safe-area-inset-top)) 24px calc(32px + env(safe-area-inset-bottom));
+  overflow-y:auto;overscroll-behavior:contain;
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .4s var(--ease),visibility 0s linear .4s;
 }
-.mobile-menu.open{opacity:1;pointer-events:auto}
-.mobile-menu a{font-family:var(--display);font-size:30px;color:var(--ivory);letter-spacing:.06em}
-.mobile-menu a:hover{color:var(--gold)}
+.mobile-menu.open{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .4s var(--ease),visibility 0s}
+.mobile-menu a{
+  font-family:var(--display);font-size:clamp(26px,7.4vw,32px);color:var(--ivory);letter-spacing:.06em;
+  padding:8px 20px;min-height:48px;display:flex;align-items:center;
+  opacity:0;transform:translateY(14px);
+  transition:opacity .5s var(--ease),transform .5s var(--ease),color .25s;
+}
+.mobile-menu.open a{opacity:1;transform:none;transition-delay:calc(60ms * var(--i,0) + 80ms),calc(60ms * var(--i,0) + 80ms),0s}
+.mobile-menu a[aria-current]{color:var(--gold)}
+.mobile-menu .menu-rsvp{
+  margin-top:clamp(10px,2.4vh,22px);font-family:var(--body);font-size:14px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--gold);border:1px solid var(--gold);padding:14px 44px;
+}
+.mobile-menu .menu-meta{
+  margin-top:clamp(14px,3vh,30px);font-size:11.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--ivory-dim);text-align:center;
+}
+@media (hover:hover){.mobile-menu a:hover{color:var(--gold)}}
 
 /* ============================================================
    HERO — scroll-scrubbed film
    (pattern: 21st.dev "scroll media" hero, pinned + scrubbed)
    ============================================================ */
 .scrub{height:480vh;position:relative}
-.scrub-stage{position:sticky;top:0;height:100vh;height:100dvh;overflow:hidden;background:var(--ink)}
+/* the stage is sized to the LARGE viewport so the film never resizes while a
+   phone's address bar slides away; --bar is the strip currently hidden behind
+   that bar, used to keep the overlays centred in what's actually visible */
+.scrub-stage{--bar:0px;position:sticky;top:0;height:100vh;overflow:hidden;background:var(--ink);contain:layout paint}
+@supports (height:100lvh){.scrub-stage{height:100lvh;--bar:calc(100lvh - 100dvh)}}
 .scrub-stage video,.scrub-stage .hero-poster{
   position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  transform:translateZ(0);will-change:contents; /* keep the video on its own GPU layer */
+  transform:translateZ(0); /* keep the video on its own GPU layer */
 }
 .hero-poster{display:none;background:center/cover no-repeat}
 .hero-shade{
@@ -168,7 +231,7 @@ body.gated{overflow:hidden}
 .chapter{
   position:absolute;inset:0;display:flex;flex-direction:column;
   align-items:center;justify-content:center;text-align:center;
-  padding:0 24px;opacity:0;transition:opacity .28s linear;pointer-events:none;
+  padding:0 24px var(--bar);opacity:0;pointer-events:none;will-change:opacity;
 }
 /* halo shadow — shading hugs only the letterforms, no screen scrim */
 :root{--halo:0 1px 2px rgba(15,9,12,.85),0 0 9px rgba(15,9,12,.85),0 0 22px rgba(15,9,12,.7),0 0 48px rgba(15,9,12,.55),0 0 90px rgba(15,9,12,.35)}
@@ -185,7 +248,7 @@ body.gated{overflow:hidden}
   text-shadow:var(--halo);
 }
 .scroll-cue{
-  position:absolute;bottom:34px;left:50%;transform:translateX(-50%);
+  position:absolute;bottom:calc(34px + var(--bar) + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
   font-size:11.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--ivory-dim);
 }
 .scroll-cue::after{
@@ -204,7 +267,7 @@ body.gated{overflow:hidden}
   white-space:nowrap;
   text-shadow:0 1px 2px rgba(15,9,12,.95),0 0 5px rgba(15,9,12,.95),0 0 12px rgba(15,9,12,.85),0 0 26px rgba(15,9,12,.7),0 0 52px rgba(15,9,12,.5);
 }
-@media (max-width:640px){.ch-line small{white-space:normal}}
+@media (max-width:640px){.ch-line small{white-space:normal;font-size:12.5px;letter-spacing:.24em;line-height:2}}
 /* countdown chapter */
 .count-title{font-family:var(--script);font-size:clamp(34px,5vw,52px);color:#E8CF97;margin-bottom:var(--space-4);text-shadow:var(--halo)}
 .countdown{display:flex;gap:clamp(18px,4vw,52px)}
@@ -220,12 +283,16 @@ body.gated{overflow:hidden}
   color:var(--gold);background:rgba(27,20,24,.35);cursor:pointer;
   transition:background .3s,color .3s;min-height:44px;
 }
-.btn:hover{background:var(--gold);color:var(--ink)}
 .btn-solid{background:var(--gold);color:var(--ink)}
-.btn-solid:hover{background:var(--ivory);border-color:var(--ivory)}
+.btn:active{background:var(--gold);color:var(--ink)}
+@media (hover:hover){
+  .btn:hover{background:var(--gold);color:var(--ink)}
+  .btn-solid:hover{background:var(--ivory);border-color:var(--ivory)}
+}
 .chapter .btn{margin-top:var(--space-5)}
 .scrub-progress{
-  position:absolute;bottom:0;left:0;height:2px;width:0;
+  position:absolute;bottom:var(--bar);left:0;height:2px;width:100%;
+  transform:scaleX(0);transform-origin:left;will-change:transform;
   background:linear-gradient(90deg,var(--gold-dim),var(--gold));z-index:5;
 }
 
@@ -233,7 +300,7 @@ body.gated{overflow:hidden}
    SECTIONS
    ============================================================ */
 section{position:relative}
-.wrap{max-width:1080px;margin:0 auto;padding:var(--space-8) clamp(22px,5vw,60px)}
+.wrap{max-width:1080px;margin:0 auto;padding:var(--space-8) max(var(--gutter),env(safe-area-inset-right)) var(--space-8) max(var(--gutter),env(safe-area-inset-left))}
 .centered{text-align:center}
 .centered .lede{margin:var(--space-3) auto 0}
 
@@ -276,7 +343,7 @@ section{position:relative}
   transition:flex 700ms var(--ease);background:var(--ink);min-width:0;
 }
 .panel img{width:100%;height:100%;object-fit:cover;opacity:.88;transition:opacity .5s,transform 6s var(--ease)}
-.panel:hover img,.panel.wide img{opacity:1;transform:scale(1.045)}
+.panel.wide img{opacity:1;transform:scale(1.045)}
 .panel.wide{flex:4.2}
 .panel figcaption{
   position:absolute;left:0;right:0;bottom:0;padding:44px 20px 16px;
@@ -305,7 +372,8 @@ section{position:relative}
 .card .glyph{line-height:1}
 .card .glyph svg{height:26px;width:auto;margin:0 auto;display:block}
 .card-btn{cursor:pointer;font:inherit;color:inherit;width:100%;transition:border-color .3s,transform .3s var(--ease)}
-.card-btn:hover{border-color:var(--gold);transform:translateY(-3px)}
+@media (hover:hover){.card-btn:hover{border-color:var(--gold);transform:translateY(-3px)}}
+.card-btn:active{border-color:var(--gold)}
 .card-hint{
   display:block;margin-top:var(--space-3);font-size:12px;letter-spacing:.28em;
   text-transform:uppercase;color:var(--gold);
@@ -322,13 +390,14 @@ section{position:relative}
 .dc-dialog{
   position:relative;background:var(--oxblood-deep);
   border:1px solid var(--gold-dim);outline:1px solid rgba(199,166,103,.18);outline-offset:7px;
-  padding:clamp(20px,4vw,44px);max-width:880px;width:100%;max-height:92vh;max-height:92dvh;overflow:auto;
+  padding:clamp(20px,4vw,44px);max-width:880px;width:100%;max-height:92vh;max-height:92dvh;overflow:auto;overscroll-behavior:contain;
   transform:translateY(14px);transition:transform .35s var(--ease);
 }
 .dc-overlay.open .dc-dialog{transform:none}
 .dc-close{
   position:absolute;top:10px;right:12px;background:none;border:none;cursor:pointer;
   color:var(--gold);font-size:32px;line-height:1;padding:8px 12px;font-family:var(--body);
+  min-width:48px;min-height:48px;z-index:1;
 }
 .dc-close:hover{color:var(--ivory)}
 .dc-split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,3vw,32px)}
@@ -483,9 +552,20 @@ section{position:relative}
 .faq-list summary::after{content:"+";font-family:var(--body);color:var(--gold);font-size:24px;transition:transform .3s}
 .faq-list details[open] summary::after{transform:rotate(45deg)}
 .faq-list details p{padding:0 4px 24px;color:var(--ivory-dim);max-width:60ch}
+.faq-list summary{gap:16px;transition:color .25s}
+@media (hover:hover){.faq-list summary:hover{color:var(--gold)}}
+/* answers ease open where the browser can animate to auto height */
+@supports (interpolate-size:allow-keywords){
+  .faq-list{interpolate-size:allow-keywords}
+  .faq-list details::details-content{block-size:0;overflow:clip;transition:block-size .45s var(--ease),content-visibility .45s allow-discrete}
+  .faq-list details[open]::details-content{block-size:auto}
+}
 
 /* footer */
-footer{background:var(--ink);text-align:center;padding:var(--space-7) 24px var(--space-6)}
+footer{background:var(--ink);text-align:center;padding:var(--space-7) 24px calc(var(--space-6) + env(safe-area-inset-bottom))}
+.foot-nav{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 26px;margin-top:var(--space-4)}
+.foot-nav a{font-size:12.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--ivory-dim);padding:12px 2px;transition:color .25s}
+@media (hover:hover){.foot-nav a:hover{color:var(--gold)}}
 footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opacity:.95}
 .foot-names{font-family:var(--display);font-size:24px;letter-spacing:.14em}
 .foot-meta{margin-top:10px;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--ivory-dim)}
@@ -501,10 +581,23 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
   .detail-grid{grid-template-columns:1fr}
   .nav-links{display:none}
   .nav-toggle{display:block}
-  .gallery{flex-direction:column;height:auto}
-  .panel{height:84px;flex:none;transition:height 600ms var(--ease)}
-  .panel.wide{height:340px;flex:none}
+  .nav.away:not(.menu-open):not(:focus-within){transform:translateY(-100%)}
+  /* gallery becomes a native swipe carousel — every photo shown whole */
+  .gallery{
+    height:auto;gap:12px;overflow-x:auto;overflow-y:hidden;
+    scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
+    scrollbar-width:none;
+    margin-inline:calc(var(--gutter) * -1);padding-inline:var(--gutter);scroll-padding-inline:var(--gutter);
+  }
+  .gallery::-webkit-scrollbar{display:none}
+  .panel,.panel.wide{flex:0 0 min(78vw,420px);aspect-ratio:4/5;scroll-snap-align:center;cursor:default;transition:none}
+  .panel img,.panel.wide img{opacity:1;transform:none;transition:none}
+  .panel figcaption{opacity:1;transform:none;white-space:normal;transition:none;font-size:16px;padding:40px 16px 14px}
+  .gallery-dots{display:flex}
 }
+.gallery-dots{display:none;justify-content:center;gap:9px;margin-top:var(--space-3)}
+.gallery-dots i{width:6px;height:6px;transform:rotate(45deg);border:1px solid var(--gold);transition:background .3s}
+.gallery-dots i.on{background:var(--gold)}
 @media (max-width:640px){
   .wrap{padding-top:var(--space-7);padding-bottom:var(--space-7)}
   .hero-names{font-size:clamp(42px,13vw,60px)}
@@ -519,21 +612,49 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
   .faq-list summary{font-size:18.5px}
   .registry-frame{outline-offset:6px}
   .btn{padding:15px 34px;width:auto}
+  .scrub{height:400vh}
+  /* two-part lines break cleanly at the dot instead of mid-phrase */
+  .split span{display:block}
+  .split .dot{display:none}
+  .hero-sub{line-height:2}
+  .story-prose{font-size:18px;line-height:1.7;margin-top:var(--space-5)}
+  .story-prose h3{font-size:25px;margin-top:var(--space-5)}
+  .lede{font-size:18px}
+  .card{padding:var(--space-4) var(--space-3)}
+  .reveal{transform:translateY(16px)}
+  .nav-mark svg{height:36px}
+}
+@media (max-height:520px) and (orientation:landscape){
+  .hero-names{font-size:clamp(38px,11vh,60px)}
+  .hero-sub{margin-top:10px}
+  .scroll-cue{display:none}
+  .count-title{margin-bottom:8px;font-size:30px}
+  .count-num{font-size:clamp(32px,12vh,54px)}
+  .chapter .btn{margin-top:16px;padding:11px 30px}
+  .ch-line{font-size:clamp(20px,6.4vh,30px)}
+  .mobile-menu{flex-direction:row;flex-wrap:wrap;align-content:center;gap:4px 18px}
+  .mobile-menu a{font-size:22px}
+  .mobile-menu .menu-rsvp,.mobile-menu .menu-meta{margin-top:0}
+  .mobile-menu .menu-meta{flex-basis:100%}
 }
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   .scrub{height:auto}
-  .scrub-stage{position:relative;height:100vh}
+  .scrub-stage{position:relative;height:100vh;height:100svh;--bar:0px}
   .scrub-stage video{display:none}
   .hero-poster{display:block}
   .chapter{transition:none}
   .reveal{opacity:1;transform:none;transition:none}
   .scroll-cue::after{animation:none}
   .panel img{transition:opacity .3s}
+  .nav,.nav::before,.mobile-menu,.mobile-menu a,.nav-toggle span,.skip{transition:none!important}
+  .mobile-menu a{transform:none}
+  .faq-list details::details-content{transition:none}
 }
 </style>
 </head>
 <body>
+<a class="skip" href="#welcome">Skip to content</a>
 
 <!-- ============ PASSWORD GATE ============ -->
 <div class="gate" id="gate">
@@ -542,10 +663,10 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
       <svg viewBox="0 0 690 650"><polygon points="340,50 620,320 340,590 60,320" fill="none" stroke="#F4ECDD" stroke-width="1.5"/><polygon points="340,74 598,320 340,566 82,320" fill="none" stroke="#F4ECDD" stroke-width="0.6"/><polygon points="340,86 587,320 340,554 93,320" fill="none" stroke="#F4ECDD" stroke-width="0.4" stroke-dasharray="1 3"/><polygon points="340,34 348,50 340,66 332,50" fill="#F4ECDD"/><polygon points="340,574 348,590 340,606 332,590" fill="#F4ECDD"/><polygon points="44,320 60,312 76,320 60,328" fill="#F4ECDD"/><polygon points="604,320 620,312 636,320 620,328" fill="#F4ECDD"/><text x="313" y="350" text-anchor="middle" font-size="122" fill="#F4ECDD" font-family="'Pinyon Script',cursive">K</text></svg>
     </div>
     <p class="gate-names">Sean <span class="amp-g">&amp;</span> Brittany</p>
-    <p class="gate-sub">July 24, 2027 &nbsp;·&nbsp; Gig Harbor, Washington</p>
+    <p class="gate-sub split"><span>July 24, 2027</span><span class="dot"> &nbsp;·&nbsp; </span><span>Gig Harbor, Washington</span></p>
     <form class="gate-form" id="gateForm" novalidate>
       <label class="gate-label" for="gatePass">Password</label>
-      <input type="password" id="gatePass" autocomplete="off" autocapitalize="none" spellcheck="false">
+      <input type="password" id="gatePass" autocomplete="off" autocapitalize="none" autocorrect="off" enterkeyhint="go" spellcheck="false">
       <p class="gate-error" id="gateError" role="alert" hidden>That&rsquo;s not quite it &mdash; please try again.</p>
       <button class="btn gate-btn" type="submit">Enter</button>
     </form>
@@ -563,38 +684,40 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
     <li><a href="#details">Details</a></li>
     <li><a href="#travel">Travel</a></li>
     <li><a href="#registry">Registry</a></li>
+    <li><a href="#faq">FAQ</a></li>
     <li><a class="nav-rsvp" href="#rsvp">RSVP</a></li>
   </ul>
   <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
     <span></span><span></span>
   </button>
 </nav>
-<div class="mobile-menu" id="mobileMenu">
-  <a href="#story">Our Story</a>
-  <a href="#details">Details</a>
-  <a href="#travel">Travel</a>
-  <a href="#registry">Registry</a>
-  <a href="#rsvp">RSVP</a>
+<div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Menu">
+  <a href="#story" style="--i:0">Our Story</a>
+  <a href="#details" style="--i:1">Details</a>
+  <a href="#travel" style="--i:2">Travel</a>
+  <a href="#registry" style="--i:3">Registry</a>
+  <a href="#faq" style="--i:4">FAQ</a>
+  <a class="menu-rsvp" href="#rsvp" style="--i:5">RSVP</a>
+  <p class="menu-meta">July 24, 2027 &nbsp;·&nbsp; Gig Harbor</p>
 </div>
 
 <!-- ============ HERO — scroll-scrubbed film ============ -->
 <div class="scrub" id="top">
   <div class="scrub-stage">
-    <video id="heroVideo" muted playsinline preload="auto" poster="poster.jpg">
-      <source src="hero.mp4" type="video/mp4">
-    </video>
+    <!-- the film's source is chosen in the script: hero-720.mp4 on phones, hero.mp4 on larger screens -->
+    <video id="heroVideo" muted playsinline disablepictureinpicture disableremoteplayback preload="metadata" poster="poster.jpg" tabindex="-1" aria-hidden="true"></video>
     <div class="hero-poster" style="background-image:url('poster.jpg')" role="img" aria-label="A candlelit waterfront aisle at dusk"></div>
     <div class="hero-shade"></div>
 
     <div class="chapter" id="ch1">
       <h1 class="hero-names">Sean <span class="amp">&amp;</span> Brittany</h1>
-      <p class="hero-sub">Saturday, July 24, 2027 &nbsp;·&nbsp; Gig Harbor, Washington</p>
+      <p class="hero-sub split"><span>Saturday, July 24, 2027</span><span class="dot"> &nbsp;·&nbsp; </span><span>Gig Harbor, Washington</span></p>
       <div class="scroll-cue">Scroll</div>
     </div>
 
     <div class="chapter" id="ch2">
       <p class="ch-line">A celebration in the garden, candlelit dinner, dancing under the stars.
-        <small>Formal attire &nbsp;·&nbsp; One unforgettable night</small>
+        <small class="split"><span>Formal attire</span><span class="dot"> &nbsp;·&nbsp; </span><span>One unforgettable night</span></small>
       </p>
     </div>
 
@@ -614,7 +737,7 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
 </div>
 
 <!-- ============ WELCOME (ivory breathing room) ============ -->
-<section class="welcome" aria-label="Welcome">
+<section class="welcome" id="welcome" aria-label="Welcome">
   <div class="wrap centered">
     <p class="eyebrow reveal">We're getting married</p>
     <h2 class="section-title reveal d1">We would be honored<br>by your presence</h2>
@@ -661,16 +784,17 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
       <p class="story-ending reveal d1">She said yes.</p>
     </div>
 
-    <div class="gallery reveal d2" id="gallery" aria-label="Photo gallery">
-      <figure class="panel wide"><img src="couple_1.jpg" alt="Sean and Brittany kissing on the bow of a boat beneath a stone arch bridge and cliffs" loading="lazy"><figcaption>A spark ignites in Positano</figcaption></figure>
-      <figure class="panel"><img src="couple_2.jpg" alt="Sean in a black tuxedo and Brittany in a black gown, smiling at each other beneath the trees" loading="lazy"><figcaption>Wedding dance partners for life</figcaption></figure>
-      <figure class="panel"><img src="couple_3.jpg" alt="Sean and Brittany on the deck of a sailboat with flowers and a spread of food, coastline behind them" loading="lazy"><figcaption>Sailing in Mallorca</figcaption></figure>
-      <figure class="panel"><img src="couple_4.jpg" alt="Brittany in a Texas jersey and cowboy hat flashing the Hook 'em sign beside Sean at a packed football stadium" loading="lazy"><figcaption>She converts him to Hook &rsquo;em</figcaption></figure>
-      <figure class="panel"><img src="couple_5.jpg" alt="Sean and Brittany in Seahawks gear on the field at Lumen Field before a game" loading="lazy"><figcaption>And he added another 12</figcaption></figure>
-      <figure class="panel"><img src="couple_6.jpg" alt="Sean and Brittany smiling along the Arno river with the Ponte Vecchio behind them in Florence" loading="lazy"><figcaption>From spritzing in Florence</figcaption></figure>
-      <figure class="panel"><img src="couple_7.jpg" alt="Sean kneeling to propose to Brittany in a candlelit garden pavilion with a Christmas tree glowing behind them" loading="lazy"><figcaption>To one knee in Amsterdam</figcaption></figure>
-      <figure class="panel"><img src="couple_8.jpg" alt="Sean and Brittany kissing beside a Christmas tree dressed in burgundy and gold, her new ring catching the light" loading="lazy"><figcaption>&ldquo;Yes&rdquo; turned into the gift of the year</figcaption></figure>
+    <div class="gallery reveal d2" id="gallery" role="group" aria-label="Photo gallery">
+      <figure class="panel wide" tabindex="0"><img src="couple_1.jpg" width="1200" height="1599" decoding="async" alt="Sean and Brittany kissing on the bow of a boat beneath a stone arch bridge and cliffs" loading="lazy"><figcaption>A spark ignites in Positano</figcaption></figure>
+      <figure class="panel" tabindex="0"><img src="couple_2.jpg" width="1200" height="1558" decoding="async" alt="Sean in a black tuxedo and Brittany in a black gown, smiling at each other beneath the trees" loading="lazy"><figcaption>Wedding dance partners for life</figcaption></figure>
+      <figure class="panel" tabindex="0"><img src="couple_3.jpg" width="1200" height="900" decoding="async" alt="Sean and Brittany on the deck of a sailboat with flowers and a spread of food, coastline behind them" loading="lazy"><figcaption>Sailing in Mallorca</figcaption></figure>
+      <figure class="panel" tabindex="0"><img src="couple_4.jpg" width="1200" height="1599" decoding="async" alt="Brittany in a Texas jersey and cowboy hat flashing the Hook 'em sign beside Sean at a packed football stadium" loading="lazy"><figcaption>She converts him to Hook &rsquo;em</figcaption></figure>
+      <figure class="panel" tabindex="0"><img src="couple_5.jpg" width="1200" height="1599" decoding="async" alt="Sean and Brittany in Seahawks gear on the field at Lumen Field before a game" loading="lazy"><figcaption>And he added another 12</figcaption></figure>
+      <figure class="panel" tabindex="0"><img src="couple_6.jpg" width="1200" height="1600" decoding="async" alt="Sean and Brittany smiling along the Arno river with the Ponte Vecchio behind them in Florence" loading="lazy"><figcaption>From spritzing in Florence</figcaption></figure>
+      <figure class="panel" tabindex="0"><img src="couple_7.jpg" width="1065" height="1600" decoding="async" alt="Sean kneeling to propose to Brittany in a candlelit garden pavilion with a Christmas tree glowing behind them" loading="lazy"><figcaption>To one knee in Amsterdam</figcaption></figure>
+      <figure class="panel" tabindex="0"><img src="couple_8.jpg" width="1065" height="1600" decoding="async" alt="Sean and Brittany kissing beside a Christmas tree dressed in burgundy and gold, her new ring catching the light" loading="lazy"><figcaption>&ldquo;Yes&rdquo; turned into the gift of the year</figcaption></figure>
     </div>
+    <div class="gallery-dots" id="galleryDots" aria-hidden="true"></div>
   </div>
 </section>
 
@@ -753,7 +877,7 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
     <div class="rsvp-form reveal d2">
       <div class="field" id="fSearch">
         <label for="rsvpSearch">Find your invitation</label>
-        <input type="search" id="rsvpSearch" autocomplete="off" spellcheck="false"
+        <input type="search" id="rsvpSearch" autocomplete="off" autocapitalize="words" autocorrect="off" enterkeyhint="search" spellcheck="false"
                placeholder="Search your last name&hellip;" aria-describedby="searchHint">
         <p class="hint" id="searchHint">Enter the last name on your invitation. If more than one party shares it, choose yours from the list.</p>
       </div>
@@ -786,7 +910,7 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
 </section>
 
 <!-- ============ FAQ ============ -->
-<section class="faq" aria-label="Frequently asked questions">
+<section class="faq" id="faq" aria-label="Frequently asked questions">
   <div class="wrap centered">
     <p class="eyebrow reveal">Questions</p>
     <h2 class="section-title reveal d1">Frequently asked</h2>
@@ -823,11 +947,11 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
     <div class="dc-split">
       <figure class="dc-side">
         <figcaption class="dc-label">His</figcaption>
-        <img src="dresscode_his.jpg" alt="Illustration of a black suit with a white shirt, black tie, and polished black shoes">
+        <img src="dresscode_his.jpg" width="900" height="1342" loading="lazy" decoding="async" alt="Illustration of a black suit with a white shirt, black tie, and polished black shoes">
       </figure>
       <figure class="dc-side">
         <figcaption class="dc-label">Hers</figcaption>
-        <img src="dresscode_hers.jpg" alt="Illustration of a formal deep navy gown with draped silhouette and embellished neckline">
+        <img src="dresscode_hers.jpg" width="900" height="1342" loading="lazy" decoding="async" alt="Illustration of a formal deep navy gown with draped silhouette and embellished neckline">
       </figure>
     </div>
     <p class="dc-note">Formal attire &mdash; a glamorous summer evening, dressed to impress.</p>
@@ -842,6 +966,12 @@ footer .foot-mono svg{height:110px;width:auto;margin:0 auto var(--space-4);opaci
   <p class="foot-names">Sean &amp; Brittany</p>
   <p class="foot-meta">July 24, 2027 · Gig Harbor, Washington</p>
   <p class="foot-script">until then —</p>
+  <nav class="foot-nav" aria-label="Footer">
+    <a href="#top">Back to top</a>
+    <a href="#details">Details</a>
+    <a href="#travel">Travel</a>
+    <a href="#rsvp">RSVP</a>
+  </nav>
 </footer>
 
 <script>
@@ -883,6 +1013,12 @@ async function sha256Hex(s){
   const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
   return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2,"0")).join("");
 }
+/* one place to freeze page scroll (gate, menu, modal can overlap) */
+const scrollLocks = new Set();
+function lockScroll(key, on){
+  on ? scrollLocks.add(key) : scrollLocks.delete(key);
+  document.documentElement.classList.toggle("locked", scrollLocks.size > 0);
+}
 function unlockGate(instant){
   document.body.classList.remove("gated");
   if (instant){ gate.hidden = true; }
@@ -896,7 +1032,7 @@ function unlockGate(instant){
   try { remembered = localStorage.getItem(GATE_KEY); } catch(e){}
   if (remembered === GATE_HASH){ unlockGate(true); return; }
   document.body.classList.add("gated");
-  gateInput.focus();
+  gateInput.focus({preventScroll:true});
   document.getElementById("gateForm").addEventListener("submit", async e => {
     e.preventDefault();
     const hash = await sha256Hex(gateInput.value);
@@ -916,30 +1052,73 @@ function unlockGate(instant){
 const nav = document.getElementById("nav");
 const menu = document.getElementById("mobileMenu");
 const toggle = document.getElementById("navToggle");
-addEventListener("scroll", () => nav.classList.toggle("scrolled", scrollY > 40), {passive:true});
-toggle.addEventListener("click", () => {
-  const open = menu.classList.toggle("open");
+const menuQuery = matchMedia("(max-width:900px)");
+
+function setMenu(open, returnFocus){
+  menu.classList.toggle("open", open);
+  nav.classList.toggle("menu-open", open);
+  nav.classList.remove("away");
   toggle.setAttribute("aria-expanded", open);
   toggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+  lockScroll("menu", open);
+  if (!open && returnFocus) toggle.focus({preventScroll:true});
+}
+toggle.addEventListener("click", () => setMenu(!menu.classList.contains("open")));
+menu.querySelectorAll("a").forEach(a => a.addEventListener("click", () => setMenu(false)));
+menuQuery.addEventListener("change", () => setMenu(false));
+addEventListener("keydown", e => {
+  if (!menu.classList.contains("open")) return;
+  if (e.key === "Escape"){ setMenu(false, true); return; }
+  if (e.key !== "Tab") return;
+  /* keep focus cycling between the toggle and the menu links */
+  const stops = [toggle, ...menu.querySelectorAll("a")];
+  const first = stops[0], last = stops[stops.length - 1];
+  if (!stops.includes(document.activeElement)){ e.preventDefault(); first.focus(); }
+  else if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
 });
-menu.querySelectorAll("a").forEach(a => a.addEventListener("click", () => {
-  menu.classList.remove("open"); toggle.setAttribute("aria-expanded","false");
-}));
+
+/* highlight the section currently being read, in both menus */
+const navAnchors = [...document.querySelectorAll(".nav-links a, .mobile-menu a")];
+function markCurrent(id){
+  for (const a of navAnchors){
+    if (a.getAttribute("href") === "#" + id) a.setAttribute("aria-current","true");
+    else a.removeAttribute("aria-current");
+  }
+}
+if ("IntersectionObserver" in window){
+  const seen = new Map();
+  const spy = new IntersectionObserver(entries => {
+    for (const e of entries) seen.set(e.target.id, e.isIntersecting);
+    let current = "";
+    for (const [id, on] of seen) if (on) current = id;   /* insertion order = page order */
+    markCurrent(current);
+  }, { rootMargin: "-45% 0px -50% 0px" });
+  document.querySelectorAll("section[id]").forEach(sec => { seen.set(sec.id, false); spy.observe(sec); });
+}
 
 /* ---------- scroll-scrubbed hero ---------- */
 const video = document.getElementById("heroVideo");
 const scrub = document.querySelector(".scrub");
+const stage = document.querySelector(".scrub-stage");
 const bar = document.getElementById("scrubBar");
 const chapters = [
   { el: document.getElementById("ch1"), from: 0.00, to: 0.30 },
   { el: document.getElementById("ch2"), from: 0.36, to: 0.60 },
   { el: document.getElementById("ch3"), from: 0.66, to: 1.01 },
 ];
-let targetTime = 0, currentTime = 0, duration = 0, ticking = false;
+chapters.forEach(c => { c.shown = -1; });
+let targetTime = 0, currentTime = 0, duration = 0, ticking = false, lastFrame = 0;
+let scrubTop = 0, scrubRange = 1, scrubEnd = 0, lastY = 0, scrollQueued = false;
 
+/* layout is measured once (and on resize), never inside the scroll handler */
+function measure(){
+  scrubTop = scrub.offsetTop;
+  scrubRange = Math.max(1, scrub.offsetHeight - stage.offsetHeight);
+  scrubEnd = scrubTop + scrub.offsetHeight;
+}
 function heroProgress(){
-  const total = scrub.offsetHeight - innerHeight;
-  return Math.min(1, Math.max(0, -scrub.getBoundingClientRect().top / total));
+  return Math.min(1, Math.max(0, (scrollY - scrubTop) / scrubRange));
 }
 function updateChapters(p){
   for (const c of chapters){
@@ -950,54 +1129,88 @@ function updateChapters(p){
       const fout = c.to   > 1 ? 1 : (c.to - p) / fade;    /* last chapter holds */
       o = Math.max(0, Math.min(1, fin, fout));
     }
-    c.el.style.opacity = o.toFixed(3);
+    o = Math.round(o * 100) / 100;
+    if (o === c.shown) continue;            /* touch the DOM only when something changed */
+    c.shown = o;
+    c.el.style.opacity = o;
+    c.el.style.visibility = o ? "visible" : "hidden";
     c.el.classList.toggle("active", o > 0.5);
   }
-  bar.style.width = (p * 100).toFixed(2) + "%";
+  bar.style.transform = "scaleX(" + p.toFixed(4) + ")";
 }
-function frame(){
+function frame(now){
   const diff = targetTime - currentTime;
-  if (Math.abs(diff) > 0.001){
-    currentTime += diff * 0.14;
-    if (duration) try { video.currentTime = currentTime; } catch(e){}
-    requestAnimationFrame(frame);
-  } else { ticking = false; }
+  if (Math.abs(diff) < 0.004){ currentTime = targetTime; seek(); ticking = false; return; }
+  /* frame-rate independent easing toward the scroll position */
+  const dt = Math.min(64, now - (lastFrame || now)) || 16.7; lastFrame = now;
+  currentTime += diff * (1 - Math.pow(1 - 0.14, dt / 16.7));
+  seek();
+  requestAnimationFrame(frame);
+}
+function seek(){
+  /* never queue a seek behind one still decoding — that is what makes scrubbing stutter */
+  if (!duration || video.seeking || video.readyState < 1) return;
+  if (Math.abs(video.currentTime - currentTime) < 0.02) return;
+  try { video.currentTime = currentTime; } catch(e){}
 }
 function onScroll(){
+  scrollQueued = false;
+  const y = scrollY;
+  nav.classList.toggle("scrolled", y > 40);
+  /* phones: tuck the bar away while reading down, bring it back on the way up */
+  const pastHero = y > scrubTop + scrubRange;
+  if (!pastHero || y < lastY - 4) nav.classList.remove("away");
+  else if (y > lastY + 4) nav.classList.add("away");
+  lastY = y;
+  if (reduceMotion) return;
+  if (y > scrubEnd) return;                           /* hero is off-screen — nothing to draw */
   const p = heroProgress();
   updateChapters(p);
   if (!duration) return;
   targetTime = p * (duration - 0.05);
-  if (!ticking){ ticking = true; requestAnimationFrame(frame); }
+  if (!ticking){ ticking = true; lastFrame = 0; requestAnimationFrame(frame); }
 }
+function queueScroll(){
+  if (!scrollQueued){ scrollQueued = true; requestAnimationFrame(onScroll); }
+}
+measure();
+addEventListener("scroll", queueScroll, {passive:true});
+addEventListener("resize", () => { measure(); queueScroll(); });
+addEventListener("load", () => { measure(); queueScroll(); });
+onScroll();
+
 if (!reduceMotion){
-  const initVideo = () => {
-    if (duration) return;
+  const conn = navigator.connection || {};
+  const lite = conn.saveData || /(^|-)2g$/.test(conn.effectiveType || "");
+  /* phones get the lighter 720p cut; it is a third of the download */
+  const small = Math.min(screen.width, screen.height) <= 820 || lite;
+  const src = small ? "hero-720.mp4" : "hero.mp4";
+  const warm = () => video.play().then(() => video.pause()).catch(()=>{});
+  video.addEventListener("loadedmetadata", () => {
+    const first = !duration;
     duration = video.duration;
-    /* warm the decoder so the first seeks don't stutter */
-    video.play().then(() => video.pause()).catch(()=>{});
+    if (first) warm();                      /* warm the decoder so the first seeks don't stutter */
+    currentTime = targetTime = heroProgress() * (duration - 0.05);
+    try { video.currentTime = currentTime; } catch(e){}
     onScroll();
-  };
-  video.addEventListener("loadedmetadata", initVideo);
-  /* metadata may already be loaded before this script attaches (cached
-     video) — the event won't re-fire, so check readyState directly */
-  if (video.readyState >= 1) initVideo();
-  addEventListener("scroll", onScroll, {passive:true});
-  addEventListener("resize", onScroll);
+  });
+  /* a finished seek may already be stale — chase the newest scroll position */
+  video.addEventListener("seeked", () => {
+    if (!ticking && Math.abs(video.currentTime - targetTime) > 0.03){
+      ticking = true; lastFrame = 0; requestAnimationFrame(frame);
+    }
+  });
+  video.src = src;                          /* streams right away (range requests)… */
   /* prime decoding on first touch (iOS) */
-  addEventListener("touchstart", function prime(){
-    video.play().then(() => video.pause()).catch(()=>{});
-    removeEventListener("touchstart", prime);
-  }, {once:true, passive:true});
-  /* buffer fully for silk-smooth scrubbing when served over http(s) */
-  if (location.protocol.startsWith("http")){
-    fetch(video.querySelector("source").src)
+  addEventListener("touchstart", warm, {once:true, passive:true});
+  /* …then swap to a fully buffered copy for silk-smooth scrubbing over http(s) */
+  if (location.protocol.startsWith("http") && !lite){
+    fetch(src)
       .then(r => r.ok ? r.blob() : Promise.reject())
-      .then(b => { const t = video.currentTime; video.src = URL.createObjectURL(b); video.load(); video.currentTime = t; })
+      .then(b => { video.src = URL.createObjectURL(b); video.load(); })
       .catch(()=>{});
-    video.addEventListener("loadedmetadata", () => { duration = video.duration; });
   }
-  updateChapters(0);
+  updateChapters(heroProgress());
 } else {
   chapters[0].el.style.opacity = 1;
 }
@@ -1023,20 +1236,32 @@ if (!reduceMotion){
   document.querySelectorAll(".reveal").forEach(el => io.observe(el));
 }
 
-/* ---------- expanding gallery ---------- */
-const panels = document.querySelectorAll(".panel");
+/* ---------- gallery: expanding panels (desktop) / swipe carousel (phones) ---------- */
+const gallery = document.getElementById("gallery");
+const panels = [...document.querySelectorAll(".panel")];
+const canHover = matchMedia("(hover:hover)");
+function widen(p){
+  if (p.classList.contains("wide")) return;
+  panels.forEach(o => o.classList.remove("wide"));
+  p.classList.add("wide");
+}
 panels.forEach(p => {
-  p.addEventListener("click", () => {
-    panels.forEach(o => o.classList.remove("wide"));
-    p.classList.add("wide");
-  });
-  p.addEventListener("mouseenter", () => {
-    if (matchMedia("(hover:hover)").matches){
-      panels.forEach(o => o.classList.remove("wide"));
-      p.classList.add("wide");
-    }
-  });
+  p.addEventListener("click", () => widen(p));
+  p.addEventListener("focus", () => widen(p));
+  p.addEventListener("mouseenter", () => { if (canHover.matches) widen(p); });
 });
+const dotBox = document.getElementById("galleryDots");
+const dots = panels.map(() => dotBox.appendChild(document.createElement("i")));
+dots[0].classList.add("on");
+if ("IntersectionObserver" in window){
+  const dotSpy = new IntersectionObserver(entries => {
+    for (const e of entries) if (e.isIntersecting){
+      const i = panels.indexOf(e.target);
+      dots.forEach((d, n) => d.classList.toggle("on", n === i));
+    }
+  }, { root: gallery, rootMargin: "0px -49% 0px -49%" });
+  panels.forEach(p => dotSpy.observe(p));
+}
 
 /* ---------- dress code modal ---------- */
 const dcModal = document.getElementById("dcModal");
@@ -1045,18 +1270,22 @@ const dcClose = document.getElementById("dcClose");
 function openDC(){
   dcModal.hidden = false;
   requestAnimationFrame(() => dcModal.classList.add("open"));
-  document.body.style.overflow = "hidden";
-  dcClose.focus();
+  lockScroll("modal", true);
+  dcClose.focus({preventScroll:true});
 }
 function closeDC(){
   dcModal.classList.remove("open");
-  document.body.style.overflow = "";
-  setTimeout(() => { dcModal.hidden = true; dcCard.focus(); }, 350);
+  lockScroll("modal", false);
+  setTimeout(() => { dcModal.hidden = true; dcCard.focus({preventScroll:true}); }, 350);
 }
 dcCard.addEventListener("click", openDC);
 dcClose.addEventListener("click", closeDC);
 dcModal.addEventListener("click", e => { if (e.target === dcModal) closeDC(); });
-addEventListener("keydown", e => { if (e.key === "Escape" && !dcModal.hidden) closeDC(); });
+addEventListener("keydown", e => {
+  if (dcModal.hidden) return;
+  if (e.key === "Escape") closeDC();
+  if (e.key === "Tab"){ e.preventDefault(); dcClose.focus(); }  /* the close button is the only stop */
+});
 
 /* ---------- registry ---------- */
 const contribute = document.getElementById("contributeBtn");
